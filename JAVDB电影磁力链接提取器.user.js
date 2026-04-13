@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name         JAVDB电影磁力链接提取器
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      3.2
+// @version      3.3
 // @description  手动切换页面处理，结果复制到剪贴板，支持所有 javdb/javdb数字.com
 // @author       JSSM
 // @include      https://javdb*.com/*
 // @grant        none
+// @license MIT
+// @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/JAVDB%E7%94%B5%E5%BD%B1%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8.user.js
+// @updateURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/JAVDB%E7%94%B5%E5%BD%B1%E7%A3%81%E5%8A%9B%E9%93%BE%E6%8E%A5%E6%8F%90%E5%8F%96%E5%99%A8.user.js
 // @run-at       document-end
 // ==/UserScript==
 
