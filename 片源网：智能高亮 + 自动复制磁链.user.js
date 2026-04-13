@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         片源网：智能高亮 + 自动复制磁链
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      2.2
+// @version      2.3
 // @description  智能高亮 + 自动复制磁链
 // @author       JSSM
 // @license      MIT
