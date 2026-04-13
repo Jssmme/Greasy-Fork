@@ -7,6 +7,8 @@
 // @match        *://movie.douban.com/people/*/collect*
 // @grant        none
 // @license      MIT
+// @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%E8%B1%86%E7%93%A3%E8%A7%82%E5%BD%B1%E8%AE%B0%E5%BD%95%E4%B8%80%E9%94%AE%E5%A4%8D%E5%88%B6.user.js
+// @updateURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%E8%B1%86%E7%93%A3%E8%A7%82%E5%BD%B1%E8%AE%B0%E5%BD%95%E4%B8%80%E9%94%AE%E5%A4%8D%E5%88%B6.user.js
 // @run-at       document-idle
 // ==/UserScript==
 
