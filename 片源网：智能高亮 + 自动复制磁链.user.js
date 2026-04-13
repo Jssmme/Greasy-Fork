@@ -11,8 +11,8 @@
 // @match        https://pianyuan.cc/r_*
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
-// @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.user.js
-// @updateURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.user.js
+// @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%E7%89%87%E6%BA%90%E7%BD%91%EF%BC%9A%E6%99%BA%E8%83%BD%E9%AB%98%E4%BA%AE%20%2B%20%E8%87%AA%E5%8A%A8%E5%A4%8D%E5%88%B6%E7%A3%81%E9%93%BE.user.js
+// @updateURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%E7%89%87%E6%BA%90%E7%BD%91%EF%BC%9A%E6%99%BA%E8%83%BD%E9%AB%98%E4%BA%AE%20%2B%20%E8%87%AA%E5%8A%A8%E5%A4%8D%E5%88%B6%E7%A3%81%E9%93%BE.user.js
 // @run-at       document-end
 // ==/UserScript==
 
