@@ -9,8 +9,8 @@
 // @grant        none
 // @run-at       document-end
 // @license MIT
-// @downloadURL https://update.greasyfork.org/scripts/519223/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.user.js
-// @updateURL https://update.greasyfork.org/scripts/519223/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.meta.js
+// @downloadURL https://github.com/Jssmme/Greasy-Fork/blob/main/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.js
+// @updateURL https://github.com/Jssmme/Greasy-Fork/blob/main/TAPD%E4%B8%80%E9%94%AE%E5%85%B3%E9%97%AD%E6%8C%89%E9%92%AE.js
 // ==/UserScript==
 
 (function() {
