@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         手机版京东跳转电脑
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.2
+// @version      0.4
 // @description  访问到手机版京东时重定向到电脑版并去除跟踪参数
 // @author       JSSM
+// @icon         https://www.jd.com/favicon.ico
 // @match        *://*.item.m.jd.com/product/*.html*
 // @grant        none
 // @license MIT
