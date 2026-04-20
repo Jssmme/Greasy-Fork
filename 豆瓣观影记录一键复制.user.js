@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         豆瓣观影记录一键复制
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.7
+// @version      0.8
 // @description  在「我看过的影视」翻页区增加「复制」按钮，一键复制本页条目（片名、年份、主要演职员、评分、日期、短评）供粘贴分析
 // @author       JSSM
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=douban.com
 // @match        *://movie.douban.com/people/*/collect*
 // @grant        none
 // @license      MIT
