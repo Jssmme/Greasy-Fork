@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣直达片源网
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.3
+// @version      0.4
 // @description  在豆瓣电影页面新增一个按钮直达片源网搜索结果
 // @author       JSSM
 // @match        *://movie.douban.com/subject/*
