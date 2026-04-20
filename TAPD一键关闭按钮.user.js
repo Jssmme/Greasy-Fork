@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         TAPD一键关闭按钮
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      1.12
+// @version      1.13
 // @description  在TAPD中添加一个一键关闭按钮
 // @author       JSSM
+// @icon         https://www.tapd.cn/favicon.ico
 // @match        *www.tapd.cn/*/bugtrace/bugs/view*
 // @match        *www.tapd.cn/tapd_fe/*/bug/detail/*
 // @grant        none
