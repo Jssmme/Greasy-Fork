@@ -5,6 +5,7 @@
 // @description  在豆瓣电影页面新增一个按钮直达片源网搜索结果
 // @author       JSSM
 // @match        *://movie.douban.com/subject/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=douban.com
 // @grant        none
 // @license      MIT
 // @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%E8%B1%86%E7%93%A3%E7%9B%B4%E8%BE%BE%E7%89%87%E6%BA%90%E7%BD%91.user.js
