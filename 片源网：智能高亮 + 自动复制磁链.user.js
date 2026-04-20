@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         片源网：智能高亮 + 自动复制磁链
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      2.3
+// @version      2.4
 // @description  智能高亮 + 自动复制磁链
 // @author       JSSM
 // @license      MIT
+// @icon         https://pianyuan.org/favicon.ico
 // @match        https://pianyuan.org/m_*
 // @match        https://pianyuan.org/r_*
 // @match        https://pianyuan.cc/m_*
