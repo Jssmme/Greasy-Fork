@@ -30,6 +30,21 @@
    🚀 点击安装脚本：豆瓣观影记录一键复制
 </a>
 
+<a href="https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/NexusModUpdatedModHighlighter.user.js"
+   style="...">
+   🚀 点击安装脚本：NexusMOD高亮
+</a>
+
+<a href=""
+   style="...">
+   🚀 点击安装脚本：暂无
+</a>
+
+<a href=""
+   style="...">
+   🚀 点击安装脚本：暂无
+</a>
+
 <a href=""
    style="...">
    🚀 点击安装脚本：暂无
