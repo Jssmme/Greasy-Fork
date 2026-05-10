@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣直达片源网
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.5
+// @version      0.6
 // @description  在豆瓣电影页面新增一个按钮直达片源网搜索结果
 // @author       JSSM
 // @match        *://movie.douban.com/subject/*
@@ -24,11 +24,13 @@
 	 * mode: 搜索参数模式
 	 *   'tt'     - 使用 IMDb ID（如 tt0111161）
 	 *   'nameEN' - 使用提取的英文名+年份（如 Code+3+2025）
+	 *   'nameCN' - 使用提取的中文名（如 蜀山传）
 	 */
 	const sites = [
 		{ name: 'to：片源网',         url: 'https://pianyuan.org/search?q=',                mode: 'tt' },
 		{ name: 'to：RARBG',          url: 'https://therarbg.com/get-posts/?keywords=',     mode: 'tt' },
 		{ name: 'to：TorrentDownload', url: 'https://www.torrentdownload.info/search?q=',  mode: 'nameEN' },
+		{ name: 'to：杰士凡',         url: 'https://www.jiesfan.com/search/',               mode: 'nameCN' },
 		// ↓ 在这里加新站点，格式参考上方即可
 	];
 
@@ -118,6 +120,32 @@
 	const englishName = extractEnglishName();
 
 	// =====================================================
+	//  提取中文名（用于 nameCN 模式）
+	// =====================================================
+	/**
+	 * 从 <h1> 标题中提取中文名
+	 *
+	 * 逻辑：
+	 * 1. 取 <h1> 中 <span property="v:itemreviewed"> 的文本
+	 * 2. 取第一个空格前的部分（如 "蜀山传 蜀山傳" → "蜀山传"）
+	 * 3. 若没有空格，则取完整文本
+	 */
+	function extractChineseName() {
+		const h1Span = document.querySelector('h1 span[property="v:itemreviewed"]');
+		const fullTitle = h1Span ? h1Span.textContent.trim() : '';
+		if (!fullTitle) return '';
+
+		// 取第一个空格前的部分（中文标题通常在前）
+		const spaceIndex = fullTitle.indexOf(' ');
+		if (spaceIndex > 0) {
+			return fullTitle.substring(0, spaceIndex).trim();
+		}
+		return fullTitle;
+	}
+
+	const chineseName = extractChineseName();
+
+	// =====================================================
 	//  生成各站点的搜索 URL
 	// =====================================================
 	function buildSearchQuery(site) {
@@ -126,6 +154,9 @@
 				.replace(/\s+/g, '+')
 				.replace(/\+$/, '')
 				.replace(/^\+/, '');
+		}
+		if (site.mode === 'nameCN') {
+			return encodeURIComponent(chineseName);
 		}
 		return encodeURIComponent(imdbId);
 	}
