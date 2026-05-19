@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         TorrentDownload-Auto-Copy-Magnet
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.2
+// @version      0.3
 // @description  Auto copy clean magnet link and update label
 // @author       JSSM
 // @match        https://www.torrentdownload.info/*
 // @grant        GM_setClipboard
+// @icon         https://www.torrentdownload.info/favicon.ico
 // @run-at       document-end
 // @license MIT
 // @downloadURL https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/TorrentDownload-Auto-Copy-Magnet.user.js
