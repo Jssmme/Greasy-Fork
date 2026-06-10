@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣直达片源网
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      0.9
+// @version      1.0.01
 // @description  在豆瓣电影页面新增一个按钮直达片源网搜索结果
 // @author       JSSM
 // @match        *://movie.douban.com/subject/*
@@ -21,7 +21,8 @@
 		{ name: 'to：TorrentDownload', url: 'https://www.torrentdownload.info/search?q=',  mode: 'nameEN' },
 		{ name: 'to：杰士凡',         url: 'https://www.jiesfan.com/search/',               mode: 'nameCN' },
 		{ name: 'to：megapeer',       url: 'https://megapeer.vip/browse.php?search=',      mode: 'nameEN' },
-        { name: 'to：黑马',       url: 'https://heimawo.top/search?keyword=',         mode: 'nameCN' },
+//        { name: 'to：黑马',       url: 'https://heimawo.top/search?keyword=',         mode: 'nameCN' },
+		{ name: 'to：BTSearch',       url: 'https://www.btsearch.love/en/search?keyword=',  mode: 'nameEN' },
 		{ name: 'to：字幕库',        url: 'https://zimuku.org/search?q=',                   mode: 'tt' },
     ];
 
