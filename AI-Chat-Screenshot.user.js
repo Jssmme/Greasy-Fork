@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AI Chat Screenshot
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      1.0.0
+// @version      1.0.1
 // @description  One-click screenshot buttons for AI chat platforms — capture Q&A pair or entire conversation. Supports Claude, Grok, ChatGPT, DeepSeek
 // @author       JSSM
 // @match        https://claude.ai/*
@@ -111,7 +111,9 @@
         return _findConversationByBlocks(PLATFORMS.claude.isMsgBlock);
       },
 
-      actionBarSelector: '[role="group"][aria-label="Message actions"]',
+      // Claude.ai changed role="group" → role="toolbar" in a recent DOM update.
+      // Match both for forward + backward compatibility.
+      actionBarSelector: '[role="toolbar"][aria-label="Message actions"], [role="group"][aria-label="Message actions"]',
       copyButtonSelector: '[aria-label="Copy"], [data-testid="action-bar-copy"]',
     },
 
