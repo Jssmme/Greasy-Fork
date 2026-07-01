@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣直达片源网
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      1.0.02
+// @version      1.0.03
 // @description  在豆瓣电影页面新增一个按钮直达片源网搜索结果
 // @author       JSSM
 // @match        *://movie.douban.com/subject/*
@@ -17,13 +17,17 @@
 
     const sites = [
 		{ name: 'to：片源网',         url: 'https://pianyuan.org/search?q=',                mode: 'tt' },
-//		{ name: 'to：RARBG',          url: 'https://therarbg.com/get-posts/?keywords=',     mode: 'tt' },
+		{ name: 'to: rarbg.to',      url: 'https://therarbg.to/get-posts/?keywords=',      mode: 'tt' },
 		{ name: 'to：TorrentDownload', url: 'https://www.torrentdownload.info/search?q=',  mode: 'nameEN' },
 		{ name: 'to：杰士凡',         url: 'https://www.jiesfan.com/search/',               mode: 'nameCN' },
-		{ name: 'to：megapeer',       url: 'https://megapeer.vip/browse.php?search=',      mode: 'nameEN' },
-//        { name: 'to：黑马',       url: 'https://heimawo.top/search?keyword=',         mode: 'nameCN' },
-		{ name: 'to：BTSearch',       url: 'https://www.btsearch.love/en/search?keyword=',  mode: 'nameEN' },
-		{ name: '磁力魔',           url: 'https://cilimo.com/?q=',                          mode: 'nameEN' },
+		{ name: 'to：megapeer',      url: 'https://megapeer.vip/browse.php?search=',      mode: 'nameEN' },
+        { name: 'to：黑马',          url: 'https://heimawo.top/search?keyword=',         mode: 'nameCN' },
+//		{ name: 'to：BTSearch',      url: 'https://www.btsearch.love/en/search?keyword=',  mode: 'nameEN' },
+		{ name: 'to: 磁力魔',        url: 'https://cilimo.com/?q=',                      mode: 'nameEN' },
+		{ name: 'to: EXT.to',        url: 'https://ext.to/browse/?q=',                   mode: 'tt' },
+		{ name: 'to: limeTorr',      url: 'https://www.limetorrents.fun/search/all/',    mode: 'nameEN' },
+		{ name: 'to: Torclaw',       url: 'https://torrentclaw.to/search?q=',            mode: 'nameEN' },
+		{ name: 'to：therarbg',      url: 'https://therarbg.com/get-posts/?keywords=',     mode: 'tt' },
 		{ name: 'to：字幕库',        url: 'https://zimuku.org/search?q=',                   mode: 'tt' },
     ];
 
@@ -164,8 +168,31 @@
     // =====================================================
     //  插入到页面
     // =====================================================
-    let lastElement = imdbIdElement.idNode;
     const parent = imdbIdElement.span.parentNode;
+
+    // 展开/折叠按钮（默认展开）
+    const toggleBreak = document.createElement('br');
+    const toggleSpan = document.createElement('span');
+    toggleSpan.classList.add('pl');
+    const toggleLink = document.createElement('a');
+    toggleLink.href = 'javascript:void(0)';
+    toggleLink.textContent = '资源站列表 [收起]';
+    toggleLink.style.cursor = 'pointer';
+    toggleSpan.appendChild(toggleLink);
+
+    // 容器包裹所有站点链接，便于整体显隐
+    const sitesContainer = document.createElement('span');
+    let isExpanded = true;
+
+    toggleLink.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        sitesContainer.style.display = isExpanded ? '' : 'none';
+        toggleLink.textContent = isExpanded ? '资源站列表 [收起]' : '资源站列表 [展开]';
+    });
+
+    parent.insertBefore(toggleBreak, imdbIdElement.idNode.nextSibling);
+    parent.insertBefore(toggleSpan, toggleBreak.nextSibling);
+    parent.insertBefore(sitesContainer, toggleSpan.nextSibling);
 
     sites.forEach(site => {
         const query = buildSearchQuery(site);
@@ -174,10 +201,8 @@
 
         const { lineBreak, span } = createLinkRow(site.name, searchUrl, keyword);
 
-        parent.insertBefore(lineBreak, lastElement.nextSibling);
-        parent.insertBefore(span, lineBreak.nextSibling);
-
-        lastElement = span;
+        sitesContainer.appendChild(lineBreak);
+        sitesContainer.appendChild(span);
     });
 
 })();
