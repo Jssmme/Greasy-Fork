@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AI Chat Screenshot
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      1.0.1
+// @version      1.0.2
 // @description  One-click screenshot buttons for AI chat platforms — capture Q&A pair or entire conversation. Supports Claude, Grok, ChatGPT, DeepSeek
 // @author       JSSM
 // @match        https://claude.ai/*
@@ -561,7 +561,26 @@
   }
 
   async function copyBlobToClipboard(blob) {
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    if (!blob || blob.size === 0) {
+      throw new Error('Generated blob is null or empty');
+    }
+    // Ensure the blob has the correct MIME type for ClipboardItem
+    let pngBlob = blob;
+    if (blob.type !== 'image/png') {
+      pngBlob = new Blob([blob], { type: 'image/png' });
+    }
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   // ──────────────────────────────────────────────
@@ -575,6 +594,7 @@
       overflowY: container.style.overflowY,
       maxHeight: container.style.maxHeight,
       height: container.style.height,
+      position: container.style.position,
       scrollTop: container.scrollTop,
       nested: [],
     };
@@ -582,6 +602,13 @@
     container.style.overflowY = 'visible';
     container.style.maxHeight = 'none';
     container.style.height = 'auto';
+    // If container is absolutely positioned (virtual list item), make it relative
+    const containerCS = getComputedStyle(container);
+    if (containerCS.position === 'absolute') {
+      container.style.position = 'relative';
+      container.style.top = '0';
+      container.style.left = '0';
+    }
     container.querySelectorAll('*').forEach(el => {
       const cs = getComputedStyle(el);
       let modified = false;
@@ -615,6 +642,35 @@
         modified = true;
       }
 
+      // Virtualized lists (Claude.ai) position each message absolutely
+      // with top:NNNNpx — this makes the wrapper have 0 height and
+      // html-to-image renders a blank image. Convert to relative.
+      if (cs.position === 'absolute') {
+        entry.position = el.style.position;
+        entry.top = el.style.top;
+        entry.left = el.style.left;
+        el.style.position = 'relative';
+        el.style.top = '0';
+        el.style.left = '0';
+        modified = true;
+
+        // Virtual list spacer: the parent of absolute-positioned items
+        // has a large height to create the scroll area. Now that children
+        // are relative, this height creates blank space — reset to auto.
+        const parentEl = el.parentElement;
+        if (parentEl && parentEl !== container) {
+          let pEntry = save.nested.find(n => n.el === parentEl);
+          if (!pEntry) {
+            pEntry = { el: parentEl };
+            save.nested.push(pEntry);
+          }
+          if (!('vlistHeight' in pEntry)) {
+            pEntry.vlistHeight = parentEl.style.height;
+            parentEl.style.height = 'auto';
+          }
+        }
+      }
+
       if (modified) save.nested.push(entry);
     });
     return save;
@@ -625,6 +681,7 @@
     save.el.style.overflowY = save.overflowY;
     save.el.style.maxHeight = save.maxHeight;
     save.el.style.height    = save.height;
+    save.el.style.position  = save.position;
     save.el.scrollTop       = save.scrollTop;
     save.nested.forEach(ns => {
       if ('overflow' in ns) {
@@ -635,6 +692,12 @@
       }
       if ('contentVisibility' in ns) ns.el.style.contentVisibility = ns.contentVisibility;
       if ('contain' in ns) ns.el.style.contain = ns.contain;
+      if ('position' in ns) {
+        ns.el.style.position = ns.position;
+        ns.el.style.top      = ns.top;
+        ns.el.style.left     = ns.left;
+      }
+      if ('vlistHeight' in ns) ns.el.style.height = ns.vlistHeight;
     });
   }
 
@@ -708,12 +771,95 @@
     });
 
     try {
-      const blob = await htmlToImage.toBlob(wrapper, {
-        pixelRatio: CONFIG.scale,
-        backgroundColor: pageBg,
+      // ── Diagnostic logging ──
+      console.log('[AI Screenshot] Diagnostics:', {
+        htmlToImageLoaded: typeof htmlToImage,
+        htmlToImageKeys: typeof htmlToImage === 'object' ? Object.keys(htmlToImage) : 'N/A',
+        wrapperSize: { w: wrapper.offsetWidth, h: wrapper.offsetHeight },
+        wrapperScrollSize: { w: wrapper.scrollWidth, h: wrapper.scrollHeight },
+        childCount: wrapper.children.length,
+        firstTag: first?.tagName,
+        firstClass: (first?.className || '').toString().slice(0, 80),
+        secondTag: second?.tagName,
+        secondClass: (second?.className || '').toString().slice(0, 80),
+        pageBg,
       });
-      await copyBlobToClipboard(blob);
-      showToast('✅ 截图已复制到剪贴板', 'success');
+
+      // Check for elements that commonly break html-to-image
+      const canvases = wrapper.querySelectorAll('canvas');
+      const svgs = wrapper.querySelectorAll('svg');
+      const iframes = wrapper.querySelectorAll('iframe');
+      const videos = wrapper.querySelectorAll('video');
+      if (canvases.length || svgs.length || iframes.length || videos.length) {
+        console.warn('[AI Screenshot] Potentially problematic elements:', {
+          canvas: canvases.length, svg: svgs.length, iframe: iframes.length, video: videos.length,
+        });
+      }
+
+      // Attempt 1: toBlob with skipFonts to avoid CORS font issues
+      let blob = null;
+      try {
+        blob = await htmlToImage.toBlob(wrapper, {
+          pixelRatio: CONFIG.scale,
+          backgroundColor: pageBg,
+          skipFonts: true,
+          cacheBust: true,
+        });
+        console.log('[AI Screenshot] toBlob attempt 1 (skipFonts):', blob ? `size=${blob.size}, type=${blob.type}` : 'null');
+      } catch (e) {
+        console.warn('[AI Screenshot] toBlob attempt 1 threw:', e);
+      }
+
+      // Attempt 2: toPng → convert to blob
+      if (!blob || blob.size === 0) {
+        console.log('[AI Screenshot] Trying toPng fallback...');
+        try {
+          const dataUrl = await htmlToImage.toPng(wrapper, {
+            pixelRatio: CONFIG.scale,
+            backgroundColor: pageBg,
+            skipFonts: true,
+            cacheBust: true,
+          });
+          console.log('[AI Screenshot] toPng result length:', dataUrl ? dataUrl.length : 'empty');
+          if (dataUrl && dataUrl.length > 100 && !dataUrl.startsWith('data:,')) {
+            const resp = await fetch(dataUrl);
+            blob = await resp.blob();
+            console.log('[AI Screenshot] toPng → blob:', `size=${blob.size}, type=${blob.type}`);
+          }
+        } catch (e) {
+          console.warn('[AI Screenshot] toPng fallback threw:', e);
+        }
+      }
+
+      // Attempt 3: toBlob without skipFonts (in case fonts are needed and not CORS-blocked)
+      if (!blob || blob.size === 0) {
+        console.log('[AI Screenshot] Trying toBlob without skipFonts...');
+        try {
+          blob = await htmlToImage.toBlob(wrapper, {
+            pixelRatio: CONFIG.scale,
+            backgroundColor: pageBg,
+          });
+          console.log('[AI Screenshot] toBlob attempt 3:', blob ? `size=${blob.size}` : 'null');
+        } catch (e) {
+          console.warn('[AI Screenshot] toBlob attempt 3 threw:', e);
+        }
+      }
+
+      if (!blob || blob.size === 0) {
+        // Log wrapper HTML snippet for debugging
+        const htmlSnippet = wrapper.outerHTML.slice(0, 2000);
+        console.error('[AI Screenshot] All attempts failed. Wrapper HTML snippet:\n', htmlSnippet);
+        throw new Error('htmlToImage returned empty blob after all attempts');
+      }
+
+      try {
+        await copyBlobToClipboard(blob);
+        showToast('✅ 截图已复制到剪贴板', 'success');
+      } catch (clipErr) {
+        console.warn('[AI Screenshot] Clipboard write failed, downloading instead:', clipErr);
+        downloadBlob(blob, `qa-screenshot-${Date.now()}.png`);
+        showToast('✅ 截图已下载（剪贴板不可用）', 'success');
+      }
     } catch (err) {
       console.error('[AI Screenshot] QA capture failed:', err);
       showToast('❌ Screenshot failed — see console', 'error');
@@ -759,8 +905,17 @@
         pixelRatio: CONFIG.scale,
         backgroundColor: pageBg,
       });
-      await copyBlobToClipboard(blob);
-      showToast('✅ 截图已复制到剪贴板', 'success');
+      if (!blob || blob.size === 0) {
+        throw new Error('htmlToImage returned an empty blob');
+      }
+      try {
+        await copyBlobToClipboard(blob);
+        showToast('✅ 截图已复制到剪贴板', 'success');
+      } catch (clipErr) {
+        console.warn('[AI Screenshot] Clipboard write failed, downloading instead:', clipErr);
+        downloadBlob(blob, `conversation-screenshot-${Date.now()}.png`);
+        showToast('✅ 截图已下载（剪贴板不可用）', 'success');
+      }
     } catch (err) {
       console.error('[AI Screenshot] Full capture failed:', err);
       showToast('❌ Screenshot failed — see console', 'error');
