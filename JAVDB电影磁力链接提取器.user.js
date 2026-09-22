@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JAVDB电影磁力链接提取器
 // @namespace    https://github.com/Jssmme/Greasy-Fork
-// @version      3.6
+// @version      3.7
 // @description  一键批量提取磁力，结果复制到剪贴板，支持所有 javdb/javdb数字.com
 // @author       MUMU
 // @include      https://javdb*.com/*
@@ -306,7 +306,7 @@
                 <div style="margin-bottom: 10px;">
                     <label id="setting-max-size-label">文件体积上限：</label>
                     <span style="display:inline-block; position: relative; margin-left: 6px;">
-                        <input type="number" id="setting-max-size" min="0.5" max="20" step="0.1" placeholder="设置为0时为无限制" style="width: 40px; padding-right: 20px;">
+                        <input type="number" id="setting-max-size" min="0" max="999" step="0.1" placeholder="设置为0时为无限制" style="width: 40px; padding-right: 20px;">
                         <span style="position:absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none;">gb</span>
                     </span>
                 </div>
@@ -492,21 +492,34 @@
         }
     }
 
-    async function extractMagnetsFromDetailPage(url, title) {
+    async function extractMagnetsFromDetailPage(url, title, currentDoc = null) {
         try {
             addDebugInfo(`正在访问: ${title}`);
-            const response = await fetch(url);
-            const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
-            const magnetItems = doc.querySelectorAll('.item.columns.is-desktop');
+            let doc = currentDoc;
+            if (!doc) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 30000);
+                try {
+                    const response = await fetch(url, { credentials: 'same-origin', signal: controller.signal });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                } finally {
+                    clearTimeout(timer);
+                }
+            }
+            // 新版列表去掉了 columns/is-desktop；同时兼容旧版结构。
+            const magnetItems = doc.querySelectorAll(
+                '#magnets-content .item, [data-movie-tab-target="magnets"] .item, .magnet-links .item, .item.columns.is-desktop'
+            );
             if (magnetItems.length === 0) {
                 addDebugInfo(`  - 未找到磁力链接区块`);
                 return null;
             }
             const candidates = [];
             magnetItems.forEach(item => {
-                const linkEl = item.querySelector('.magnet-name a');
-                if (!linkEl) return;
-                const magnetUrl = linkEl.getAttribute('href');
+                const linkEl = item.querySelector('.magnet-name a[href^="magnet:"]');
+                const copyEl = item.querySelector('[data-clipboard-text^="magnet:"]');
+                const magnetUrl = linkEl?.getAttribute('href') || copyEl?.getAttribute('data-clipboard-text');
                 if (!magnetUrl || !magnetUrl.startsWith('magnet:')) return;
                 const metaEl = item.querySelector('.meta');
                 const sizeMatch = metaEl && metaEl.textContent.match(/([\d.]+)\s*(GB|MB|KB)/i);
@@ -530,7 +543,11 @@
             const pool = maxBytes > 0
                 ? candidates.filter(c => c.sizeBytes <= maxBytes || c.sizeBytes === 0)
                 : candidates;
-            const sortedPool = (pool.length ? pool : candidates).sort((a, b) => b.sizeBytes - a.sizeBytes);
+            if (!pool.length) {
+                addDebugInfo('  - 所有磁链均超过文件体积上限');
+                return null;
+            }
+            const sortedPool = pool.sort((a, b) => b.sizeBytes - a.sizeBytes);
             const preferred = s.subtitlePriorityEnabled
                 ? sortedPool.filter(c => c.hasSubtitle && c.sizeBytes >= subtitleMinBytes)
                 : [];
@@ -547,7 +564,9 @@
     function addDebugInfo(message) {
         const debugDiv = document.getElementById('debug-info');
         const timestamp = new Date().toLocaleTimeString();
-        debugDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+        const line = document.createElement('div');
+        line.textContent = `[${timestamp}] ${message}`;
+        debugDiv.appendChild(line);
         debugDiv.scrollTop = debugDiv.scrollHeight;
     }
 
@@ -563,76 +582,55 @@
         const page = (window.location.search.match(/[?&]page=(\d+)/) || [])[1] || 1;
         addDebugInfo(`[开始] 处理当前页面 (页码: ${page})`);
 
-        // 获取所有电影项目
-        const items = document.querySelectorAll('.movie-list .item, .item-box, .item');
-        if (items.length === 0) {
+        try {
+        const jobs = [];
+        const seen = new Set();
+        const cleanText = el => (el?.textContent || '').trim().replace(/\s+/g, ' ');
+        // 详情页直接读取当前 DOM，支持已经由站点动态加载的磁链。
+        if (/^\/v\/[^/]+\/?$/.test(location.pathname)) {
+            const heading = document.querySelector('h2.title, h1.title, h1');
+            jobs.push({
+                url: location.href,
+                title: cleanText(heading) || document.title,
+                codeName: cleanText(heading?.querySelector('strong')),
+                doc: document
+            });
+        } else {
+            for (const link of document.querySelectorAll('.movie-list a[href], .item-box a[href], .item a.box[href]')) {
+                const url = new URL(link.getAttribute('href'), location.href);
+                if (url.origin !== location.origin || !/^\/v\/[^/]+\/?$/.test(url.pathname)) continue;
+                url.search = '';
+                url.hash = '';
+                if (seen.has(url.href)) continue;
+                seen.add(url.href);
+                const item = link.closest('.item, .item-box') || link;
+                const titleEl = item.querySelector('.video-title') || item.querySelector('.title');
+                jobs.push({
+                    url: url.href,
+                    title: cleanText(titleEl) || cleanText(link) || url.pathname,
+                    codeName: cleanText(titleEl?.querySelector('strong')),
+                    doc: null
+                });
+            }
+        }
+        if (!jobs.length) {
             statusInfo.textContent = t('noItems');
             addDebugInfo('[错误] 未找到电影项目');
-            startBtn.disabled = false;
             return;
         }
-        addDebugInfo(`[分析] 找到 ${items.length} 个电影项目`);
-
+        addDebugInfo(`[分析] 找到 ${jobs.length} 个电影项目`);
         const results = [];
         let processedCount = 0;
-
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            const linkElement = item.querySelector('a.box') || item.querySelector('a');
-            if (!linkElement) {
-                addDebugInfo(`[跳过] 第 ${i+1} 个项目没有找到链接元素`);
-                continue;
-            }
-            const relativeUrl = linkElement.getAttribute('href');
-            if (!relativeUrl) {
-                addDebugInfo(`[跳过] 第 ${i+1} 个项目没有href属性`);
-                continue;
-            }
-
-            const url = new URL(relativeUrl, window.location.origin).href;
-
-            // 获取标题：优先从 .video-title 提取完整文本（含番号）
-            let title = '';
-            const videoTitleElement = item.querySelector('.video-title') ||
-                                  linkElement.querySelector('.video-title');
-
-            if (videoTitleElement) {
-                // 直接取整个文本内容，并压缩连续空白为单空格
-                title = videoTitleElement.textContent.trim().replace(/\s+/g, ' ');
-            } else {
-                // 降级方案：尝试其他常见类名
-                const fallbackTitleEl = item.querySelector('.title') ||
-                                        linkElement.querySelector('.title') ||
-                                        linkElement;
-                title = fallbackTitleEl ? fallbackTitleEl.textContent.trim().replace(/\s+/g, ' ') : '';
-            }
-
-            // 不再删除番号！番号是标题的一部分
-            if (!title) {
-                title = `未知标题_${i + 1}`;
-            }
-
-            // 番号名：从 .video-title 内的 <strong> 提取（如 KTRA-767）
-            let codeName = '';
-            const strongEl = videoTitleElement ? videoTitleElement.querySelector('strong') : item.querySelector('.video-title strong');
-            if (strongEl) {
-                codeName = strongEl.textContent.trim();
-            }
-            if (!codeName) {
-                const codeMatch = relativeUrl.match(/\/v\/([^/?]+)/);
-                codeName = codeMatch ? codeMatch[1] : (relativeUrl.split('/').filter(Boolean).pop() || '');
-            }
-
-            if (!url) continue;
-
+        for (let i = 0; i < jobs.length; i++) {
+            const { url, title, codeName, doc } = jobs[i];
             // 更新进度
             processedCount++;
-            progressInfo.textContent = t('progress') + processedCount + '/' + items.length;
+            progressInfo.textContent = t('progress') + processedCount + '/' + jobs.length;
             statusInfo.textContent = t('processing') + title;
             addDebugInfo(`[处理] ${title}`);
 
             // 提取磁力链接（增强版）
-            const magnet = await extractMagnetsFromDetailPage(url, title);
+            const magnet = await extractMagnetsFromDetailPage(url, title, doc);
 
             results.push({
                 番号名: codeName,
@@ -645,7 +643,7 @@
 
             // 可配置延迟，避免请求过于频繁
             const delayMs = (getSettings().delaySeconds || 2) * 1000;
-            await new Promise(resolve => setTimeout(resolve, delayMs));
+            if (i + 1 < jobs.length) await new Promise(resolve => setTimeout(resolve, delayMs));
         }
 
         // 初始化全局存储（如果不存在）
@@ -659,7 +657,12 @@
         statusInfo.textContent = t('pageDone') + results.length + t('resultsTotal') + window.allExtractionResults.length + t('totalSuffix');
         addDebugInfo(`[完成] 当前页提取 ${results.length} 个，总计 ${window.allExtractionResults.length} 个`);
         copyBtn.style.display = 'inline-block';
-        startBtn.disabled = false;
+        } catch (error) {
+            statusInfo.textContent = t('error') + error.message;
+            addDebugInfo(`[错误] ${error.message}`);
+        } finally {
+            startBtn.disabled = false;
+        }
     }
 
     // 复制结果到剪贴板（Tab 分隔，按设置只输出勾选的列）
