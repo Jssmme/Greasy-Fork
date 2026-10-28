@@ -16,7 +16,7 @@
     'use strict';
 
     const sites = [
-		{ name: 'to：片源网',         url: 'https://pianyuan.org/search?q=',                mode: 'tt' },
+		{ name: 'to：片源网',         url: 'https://wangyougu.net/search?q=',                mode: 'tt' },
 		{ name: 'to: rarbg.to',      url: 'https://therarbg.to/get-posts/?keywords=',      mode: 'tt' },
 		{ name: 'to：TorrentDownload', url: 'https://www.torrentdownload.info/search?q=',  mode: 'nameEN' },
 		{ name: 'to：杰士凡',         url: 'https://www.jiesfan.com/search/',               mode: 'nameCN' },
