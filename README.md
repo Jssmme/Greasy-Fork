@@ -35,7 +35,7 @@
    🚀 点击安装脚本：NexusMOD高亮
 </a>
 
-<a href="[https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/NexusModUpdatedModHighlighter.user.js](https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%e7%89%87%e6%ba%90%e7%bd%91%e4%b8%80%e9%94%ae115%e7%a6%bb%e7%ba%bf.user.js)"
+<a href="https://raw.githubusercontent.com/Jssmme/Greasy-Fork/main/%e7%89%87%e6%ba%90%e7%bd%91%e4%b8%80%e9%94%ae115%e7%a6%bb%e7%ba%bf.user.js"
    style="...">
    🚀 点击安装脚本： 片源网一键115离线
 </a>
